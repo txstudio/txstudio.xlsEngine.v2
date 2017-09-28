@@ -210,14 +210,17 @@ namespace xlsEngine.v2
 
                 if (InsertHeaderRow(_currentDataRow, _beforeDataRow) == true)
                     if (this._option.Header != null)
-                        this.SetRowHeader(this._option.Header, _currentDataRow, _beforeDataRow);
+                        this.SetRow(this._option.Header
+                                    , () => { this.HeaderMap(_currentDataRow, _beforeDataRow); });
 
                 if (this._option.Detail != null)
-                    this.SetRowDetail(this._option.Detail, _currentDataRow, _beforeDataRow, _nextDataRow);
+                    this.SetRow(this._option.Detail
+                                , () => { this.RecordMap(_currentDataRow, _beforeDataRow, _nextDataRow); });
 
                 if (InsertFooterRow(_currentDataRow, _nextDataRow) == true)
                     if (this._option.Footer != null)
-                        this.SetRowFooter(this._option.Footer, _currentDataRow, _nextDataRow);
+                        this.SetRow(this._option.Footer
+                                    , () => { this.FooterMap(_currentDataRow, _nextDataRow); });
 
 
                 _beforeDataRow = _currentDataRow;
@@ -280,28 +283,11 @@ namespace xlsEngine.v2
         }
 
 
-        /// <summary>設定資料列表頭</summary>
-        private void SetRowHeader(RowTemplateConfig config, DataRow current, DataRow before)
-        {
-            int _num;
-            int _sheetIndex;
-
-            HSSFSheet _sourceSheet;
-
-            _num = config.RowIndexStart;
-            _sheetIndex = config.SheetIndex;
-            _sourceSheet = this._workBook.GetSheetAt(_sheetIndex) as HSSFSheet;
-
-            while (_num <= this._option.Header.RowIndexEnd)
-            {
-                this.CopyRow(_sourceSheet, _num);
-                this.HeaderMap(current, before);
-                _num = _num + 1;
-            }
-        }
 
         /// <summary>設定資料列內容</summary>
-        private void SetRowDetail(RowTemplateConfig config, DataRow current, DataRow before, DataRow next)
+        /// <param name="config">資料列範本設定物件</param>
+        /// <param name="action">執行方法委派</param>
+        private void SetRow(RowTemplateConfig config, Action action)
         {
             int _num;
             int _sheetIndex;
@@ -315,31 +301,11 @@ namespace xlsEngine.v2
             while (_num <= config.RowIndexEnd)
             {
                 this.CopyRow(_sourceSheet, _num);
-                this.RecordMap(current, before, next);
+                action();
                 _num = _num + 1;
             }
-
-        }
-
-        /// <summary>設定資料列表尾</summary>
-        private void SetRowFooter(RowTemplateConfig config, DataRow current, DataRow next)
-        {
-            int _num;
-            int _sheetIndex;
-
-            HSSFSheet _sourceSheet;
-
-            _num = config.RowIndexStart;
-            _sheetIndex = config.SheetIndex;
-            _sourceSheet = this._workBook.GetSheetAt(_sheetIndex) as HSSFSheet;
-
-            while (_num <= config.RowIndexEnd)
-            {
-                this.CopyRow(_sourceSheet, _num);
-                this.FooterMap(current, next);
-                _num = _num + 1;
-            }
-        }
+        }       
+        
 
         /// <summary>設定文件表尾</summary>
         private void SetDocumentFooter(RowTemplateConfig config)
